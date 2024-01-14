@@ -10,6 +10,7 @@ const PasswordCompare = async (
     passwordHash: string
 ): Promise<boolean> => {
     const matched = await bcrypt.compare(password, passwordHash);
+
     return matched;
 };
 

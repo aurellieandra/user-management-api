@@ -13,6 +13,11 @@ router.post(
     UserValidation.registerValidation,
     UserController.register
 );
+router.post(
+    "/user/login",
+    // UserValidation.registerValidation,
+    UserController.login
+);
 
 // User Role
 router.get("/role", RoleController.getRoles);

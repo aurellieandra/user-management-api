@@ -28,6 +28,53 @@ const register = async (req: Request, res: Response): Promise<Response> => {
     }
 };
 
+const login = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({
+            where: {
+                email: email,
+            },
+        });
+
+        if (!user) {
+            return res
+                .status(401)
+                .send(
+                    Helper.ResponseData(401, "Unauthorized Access", null, null)
+                );
+        }
+
+        /**
+        const matched = await PasswordHelper.PasswordCompare(
+            password,
+            user.password
+        );
+
+        if (!matched) {
+            return res
+                .status(401)
+                .send(
+                    Helper.ResponseData(401, "Unauthorized Access", null, null)
+                );
+        }
+         */
+
+        return res
+            .status(200)
+            .send(
+                Helper.ResponseData(
+                    200,
+                    "Successfully logged in",
+                    null,
+                    user.dataValues
+                )
+            );
+    } catch (error) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    }
+};
+
 const getUsers = async (req: Request, res: Response): Promise<Response> => {
     try {
         const users = await User.findAll({
@@ -203,6 +250,7 @@ const deleteRole = async (req: Request, res: Response): Promise<Response> => {
 
 export default {
     register,
+    login,
     /**
     getRoles,
     getRoleByID,
