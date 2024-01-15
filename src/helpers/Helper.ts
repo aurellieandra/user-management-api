@@ -40,7 +40,7 @@ const ResponseData = (
 
 const GenerateToken = (data: any): string => {
 	const token = jwt.sign(data, process.env.JWT_TOKEN as string, {
-		expiresIn: '10m',
+		expiresIn: '20s',
 	});
 	return token;
 };
