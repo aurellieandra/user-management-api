@@ -6,7 +6,7 @@ import Role from "../db/models/Role";
 
 const register = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const { name, email, password, confirmPassword } = req.body;
+        const { name, email, password, roleID, confirmPassword } = req.body;
 
         const hashed = await PasswordHelper.PasswordHashing(password);
 
@@ -14,10 +14,12 @@ const register = async (req: Request, res: Response): Promise<Response> => {
             name,
             email,
             password: hashed,
+            roleID,
             active: true,
             verified: true,
-            roleID: 1,
         });
+
+        user.password = "";
 
         return res
             .status(200)
