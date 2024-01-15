@@ -5,6 +5,8 @@ import UserController from "../controllers/UserController";
 
 import UserValidation from "../middleware/validation/UserValidation";
 
+import Authorization from "../middleware/Authorization";
+
 const router = express.Router();
 
 // User Data
@@ -15,12 +17,11 @@ router.post(
 );
 router.post(
     "/user/login",
-    // UserValidation.registerValidation,
     UserController.login
 );
 
 // User Role
-router.get("/role", RoleController.getRoles);
+router.get("/role", Authorization.Authenticated, RoleController.getRoles);
 router.get("/role/:id", RoleController.getRoleByID);
 router.post("/role", RoleController.createRole);
 router.post("/role/:id", RoleController.updateRole);
