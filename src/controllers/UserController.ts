@@ -1,251 +1,142 @@
 import { Request, Response } from "express";
 import User from "../db/models/User";
 import Helper from "../helpers/Helper";
-import PasswordHelper from "../helpers/PasswordHelper";
-import Role from "../db/models/Role";
 
-const register = async (req: Request, res: Response): Promise<Response> => {
+const getUsers = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const { name, email, password, roleID, confirmPassword } = req.body;
-
-        const hashed = await PasswordHelper.PasswordHashing(password);
-
-        const user = await User.create({
-            name,
-            email,
-            password: hashed,
-            roleID,
-            active: true,
-            verified: true,
-        });
-
-        user.password = "";
-
-        return res
-            .status(200)
-            .send(
-                Helper.ResponseData(201, "Successfully create user", null, user)
-            );
-    } catch (error: any) {
-        return res.status(500).send(Helper.ResponseData(500, "", error, null));
-    }
-};
-
-const login = async (req: Request, res: Response): Promise<Response> => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({
+        const users = await User.findAll({
             where: {
-                email: email,
+                active: true,
             },
         });
-
-        if (!user) {
-            return res
-                .status(401)
-                .send(
-                    Helper.ResponseData(401, "Unauthorized Access", null, null)
-                );
-        }
-
-        const matched = await PasswordHelper.PasswordCompare(
-            password,
-            user.password
-        );
-        if (!matched) {
-            return res
-                .status(401)
-                .send(
-                    Helper.ResponseData(401, "Unauthorized Access", null, null)
-                );
-        }
-
-        const dataUser = {
-            name: user.name,
-            email: user.email,
-            roleID: user.roleID,
-            verified: user.verified,
-            active: user.active,
-        };
-
-        const token = Helper.GenerateToken(dataUser);
-        const refreshToken = Helper.GenerateRefreshToken(dataUser);
-
-        (user.accessToken = refreshToken), await user.save();
-
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000,
-        });
-
-        const responseUser = {
-            name: user.name,
-            email: user.email,
-            roleID: user.roleID,
-            verified: user.verified,
-            active: user.active,
-            token,
-        };
 
         return res
             .status(200)
             .send(
                 Helper.ResponseData(
                     200,
-                    "Successfully logged in",
+                    "Successfully Get All User Data",
                     null,
-                    responseUser
+                    users
                 )
             );
-    } catch (error) {
-        return res.status(500).send(Helper.ResponseData(500, "", error, null));
-    }
-};
-
-const refreshToken = async (req: Request, res: Response): Promise<Response> => {
-    try {
-        const refreshToken = req.cookies?.refreshToken;
-        if (!refreshToken) {
-            return res
-                .status(401)
-                .send(
-                    Helper.ResponseData(401, "Unauthorized Access", null, null)
-                );
-        }
-
-        const decodedUser = Helper.ExtractRefreshToken(refreshToken);
-        if (!decodedUser) {
-            return res
-                .status(401)
-                .send(
-                    Helper.ResponseData(401, "Unauthorized Access", null, null)
-                );
-        }
-
-        const token = Helper.GenerateToken({
-            name: decodedUser.name,
-            email: decodedUser.email,
-            roleID: decodedUser.roleID,
-            verified: decodedUser.verified,
-            active: decodedUser.active,
-        });
-
-        const resultUser = {
-            name: decodedUser.name,
-            email: decodedUser.email,
-            roleID: decodedUser.roleID,
-            verified: decodedUser.verified,
-            active: decodedUser.active,
-            token: token,
-        };
-
+    } catch (error: any) {
         return res
-            .status(200)
-            .send(Helper.ResponseData(200, "OK", null, resultUser));
-    } catch (error) {
-        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+            .status(500)
+            .send(
+                Helper.ResponseData(500, "Internal Server Error", error, null)
+            );
     }
 };
 
-const getUserProfile = async (
-    req: Request,
-    res: Response
-): Promise<Response> => {
+const getUserByID = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const email = res.locals.userEmail;
+        const { id } = req.params;
+        const user = await User.findByPk(id);
 
-        const user = await User.findOne({
-            where: {
-                email,
-            },
-            include: {
-                model: Role,
-                attributes: ["id", "roleName"],
-            },
-        });
         if (!user) {
             return res
                 .status(404)
                 .send(Helper.ResponseData(404, "User Not Found", null, null));
         }
 
-        user.password = "";
-        user.accessToken = "";
-
         return res
             .status(200)
             .send(
                 Helper.ResponseData(
                     200,
-                    "Successfully get user's profile",
+                    "Successfully Get User Data by ID",
                     null,
                     user
                 )
             );
-    } catch (error) {
-        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    } catch (error: any) {
+        return res
+            .status(500)
+            .send(
+                Helper.ResponseData(500, "Internal Server Error", error, null)
+            );
     }
 };
 
-const logout = async (req: Request, res: Response): Promise<Response> => {
+const updateUser = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const refreshToken = req.cookies?.refreshToken;
-        if (!refreshToken) {
-            return res
-                .status(200)
-                .send(
-                    Helper.ResponseData(
-                        200,
-                        "Refresh Token Expired",
-                        null,
-                        null
-                    )
-                );
-        }
+        const { id } = req.params;
 
-        const email = res.locals.userEmail;
+        // not change roleID & password & access token here
+        const { name, email, verified, active } = req.body;
 
-        const user = await User.findOne({
-            where: {
-                email,
-            },
-        });
+        const user = await User.findByPk(id);
+
         if (!user) {
-            res.clearCookie("refreshToken");
             return res
-                .status(200)
-                .send(
-                    Helper.ResponseData(
-                        200,
-                        "User logged out successfully",
-                        null,
-                        null
-                    )
-                );
+                .status(404)
+                .send(Helper.ResponseData(404, "User Not Found", null, null));
         }
 
-        await user.update({ accessToken: null }, { where: { email } });
-        res.clearCookie("refreshToken");
+        user.name = name;
+        user.email = email;
+        user.verified = verified;
+        user.active = active;
+        await user.save();
 
         return res
-            .status(200)
+            .status(201)
             .send(
                 Helper.ResponseData(
-                    200,
-                    "User logged out successfully",
+                    201,
+                    "Successfully Update User Data",
+                    null,
+                    user
+                )
+            );
+    } catch (error: any) {
+        return res
+            .status(500)
+            .send(
+                Helper.ResponseData(500, "Internal Server Error", error, null)
+            );
+    }
+};
+
+const deleteUser = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findByPk(id);
+
+        if (!user) {
+            return res.status(404).send({
+                status: 404,
+                message: "User Data Not Found",
+                data: null,
+            });
+        }
+
+        await user.destroy();
+
+        return res
+            .status(201)
+            .send(
+                Helper.ResponseData(
+                    201,
+                    "Successfully Delete User Data",
                     null,
                     null
                 )
             );
-    } catch (error) {
-        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    } catch (error: any) {
+        return res
+            .status(500)
+            .send(
+                Helper.ResponseData(500, "Internal Server Error", error, null)
+            );
     }
 };
 
 export default {
-    register,
-    login,
-    refreshToken,
-    getUserProfile,
-    logout,
+    getUsers,
+    getUserByID,
+    updateUser,
+    deleteUser,
 };
