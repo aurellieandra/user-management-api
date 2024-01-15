@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import User from "../db/models/User";
 import Helper from "../helpers/Helper";
 import PasswordHelper from "../helpers/PasswordHelper";
+import Role from "../db/models/Role";
 
 const register = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -155,6 +156,10 @@ const getUserProfile = async (
             where: {
                 email,
             },
+            include: {
+                model: Role,
+                attributes: ["id", "roleName"],
+            },
         });
         if (!user) {
             return res
@@ -180,176 +185,58 @@ const getUserProfile = async (
     }
 };
 
-const getUsers = async (req: Request, res: Response): Promise<Response> => {
+const logout = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const users = await User.findAll({
+        const refreshToken = req.cookies?.refreshToken;
+        if (!refreshToken) {
+            return res
+                .status(200)
+                .send(
+                    Helper.ResponseData(
+                        200,
+                        "Refresh Token Expired",
+                        null,
+                        null
+                    )
+                );
+        }
+
+        const email = res.locals.userEmail;
+
+        const user = await User.findOne({
             where: {
-                active: true,
+                email,
             },
         });
-
-        return res.status(200).send({
-            status: 200,
-            message: "Successfully Get Users",
-            data: users,
-        });
-    } catch (error: any) {
-        if (error != null && error instanceof Error) {
-            return res.status(500).send({
-                status: 500,
-                message: error.message,
-                errors: error,
-            });
+        if (!user) {
+            res.clearCookie("refreshToken");
+            return res
+                .status(200)
+                .send(
+                    Helper.ResponseData(
+                        200,
+                        "User logged out successfully",
+                        null,
+                        null
+                    )
+                );
         }
 
-        return res.status(500).send({
-            status: 500,
-            message: "Internal Server Error",
-            errors: error,
-        });
-    }
-};
+        await user.update({ accessToken: null }, { where: { email } });
+        res.clearCookie("refreshToken");
 
-const getRoleByID = async (req: Request, res: Response): Promise<Response> => {
-    try {
-        const { id } = req.params;
-        const role = await User.findByPk(id);
-
-        if (!role) {
-            return res.status(404).send({
-                status: 404,
-                message: "Data Not Found",
-                data: null,
-            });
-        }
-
-        return res.status(200).send({
-            status: 200,
-            message: "Successfully Get User Role by ID",
-            data: role,
-        });
-    } catch (error: any) {
-        if (error != null && error instanceof Error) {
-            return res.status(500).send({
-                status: 500,
-                message: error.message,
-                errors: error,
-            });
-        }
-
-        return res.status(500).send({
-            status: 500,
-            message: "Internal Server Error",
-            errors: error,
-        });
-    }
-};
-
-const createRole = async (req: Request, res: Response): Promise<Response> => {
-    try {
-        const { roleName, active } = req.body;
-
-        const role = await User.create({
-            active,
-        });
-
-        return res.status(201).send({
-            status: 201,
-            message: "Successfully Create User Role",
-            data: role,
-        });
-    } catch (error: any) {
-        if (error != null && error instanceof Error) {
-            return res.status(500).send({
-                status: 500,
-                message: error.message,
-                errors: error,
-            });
-        }
-
-        return res.status(500).send({
-            status: 500,
-            message: "Internal Server Error",
-            errors: error,
-        });
-    }
-};
-
-const updateRole = async (req: Request, res: Response): Promise<Response> => {
-    try {
-        const { id } = req.params;
-        const { roleName, active } = req.body;
-
-        const role = await User.findByPk(id);
-
-        if (!role) {
-            return res.status(404).send({
-                status: 404,
-                message: "Data Not Found",
-                data: null,
-            });
-        }
-
-        role.active = active;
-        await role.save();
-
-        return res.status(201).send({
-            status: 201,
-            message: "Successfully Update User Role",
-            data: role,
-        });
-    } catch (error: any) {
-        if (error != null && error instanceof Error) {
-            return res.status(500).send({
-                status: 500,
-                message: error.message,
-                errors: error,
-            });
-        }
-
-        return res.status(500).send({
-            status: 500,
-            message: "Internal Server Error",
-            errors: error,
-        });
-    }
-};
-
-const deleteRole = async (req: Request, res: Response): Promise<Response> => {
-    try {
-        const { id } = req.params;
-
-        const role = await User.findByPk(id);
-
-        if (!role) {
-            return res.status(404).send({
-                status: 404,
-                message: "Data Not Found",
-                data: null,
-            });
-        }
-
-        await role.destroy();
-
-        return res.status(201).send({
-            status: 201,
-            message: "Successfully Delete User Role",
-            data: null,
-        });
-    } catch (error: any) {
-        if (error != null && error instanceof Error) {
-            return res.status(500).send({
-                status: 500,
-                message: error.message,
-                errors: error,
-            });
-        }
-
-        return res.status(500).send({
-            status: 500,
-            message: "Internal Server Error",
-            errors: error,
-        });
+        return res
+            .status(200)
+            .send(
+                Helper.ResponseData(
+                    200,
+                    "User logged out successfully",
+                    null,
+                    null
+                )
+            );
+    } catch (error) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
     }
 };
 
@@ -358,11 +245,5 @@ export default {
     login,
     refreshToken,
     getUserProfile,
-    /**
-    getRoles,
-    getRoleByID,
-    createRole,
-    updateRole,
-    deleteRole,
-     */
+    logout,
 };
