@@ -15,13 +15,12 @@ router.post(
     UserValidation.registerValidation,
     UserController.register
 );
-router.post(
-    "/user/login",
-    UserController.login
-);
+router.post("/user/login", UserController.login);
+router.get("/user/refresh-token", UserController.refreshToken);
 router.get(
-    "/user/refresh-token",
-    UserController.refreshToken
+    "/user/profile",
+    Authorization.Authenticated,
+    UserController.getUserProfile
 );
 
 // User Role
