@@ -90,38 +90,36 @@ const login = async (req: Request, res: Response): Promise<Response> => {
 
 const refreshToken = async (req: Request, res: Response): Promise<Response> => {
 	try {
-		const refreshToken = req.cookies?.refreshToken;
+		const refreshToken = req.cookies.refreshToken;
+		console.log(req.cookies)
 		if (!refreshToken) {
-			return res
-				.status(401)
-				.send(Helper.ResponseData(401, 'Unauthorized Access', null, null));
+			return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
 		}
 
-		const decodeUser = Helper.ExtractRefreshToken(refreshToken);
-		if (!decodeUser) {
-			return res
-				.status(401)
-				.send(Helper.ResponseData(401, 'Unauthorized Access', null, null));
+		const decodedUser = Helper.ExtractRefreshToken(refreshToken);
+		console.log(decodedUser);
+		if (!decodedUser) {
+			return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
 		}
 
 		const token = Helper.GenerateToken({
-			name: decodeUser.name,
-			email: decodeUser.email,
-			roleID: decodeUser.roleID,
-			verified: decodeUser.verified,
-			active: decodeUser.active
+			name: decodedUser.name,
+			email: decodedUser.email,
+			roleID: decodedUser.roleID,
+			verified: decodedUser.verified,
+			active: decodedUser.active
 		});
 
 		const resultUser = {
-			name: decodeUser.name,
-			email: decodeUser.email,
-			roleID: decodeUser.roleID,
-			verified: decodeUser.verified,
-			active: decodeUser.active,
-			token,
-		};
+			name: decodedUser.name,
+			email: decodedUser.email,
+			roleID: decodedUser.roleID,
+			verified: decodedUser.verified,
+			active: decodedUser.active,
+			token: token
+		}
 
-		return res.status(200).send(Helper.ResponseData(200, "OK", null, resultUser))
+		return res.status(200).send(Helper.ResponseData(200, "OK", null, resultUser));
 	} catch (error) {
 		return res.status(500).send(Helper.ResponseData(500, '', error, null));
 	}

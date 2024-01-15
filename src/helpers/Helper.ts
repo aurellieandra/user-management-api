@@ -52,7 +52,7 @@ const GenerateRefreshToken = (data: any): string => {
 	return token;
 };
 
-const ExtractToken = (token: string) => {
+const ExtractToken = (token: string): UserData | null => {
     const secretKey: string = process.env.JWT_TOKEN as string
 
     let resData: any
@@ -73,7 +73,7 @@ const ExtractToken = (token: string) => {
     return null
 }
 
-const ExtractRefreshToken = (token: string) => {
+const ExtractRefreshToken = (token: string): UserData | null => {
     const secretKey: string = process.env.JWT_REFRESH_TOKEN as string
 
     let resData: any
