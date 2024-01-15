@@ -105,14 +105,18 @@ const refreshToken = async (req: Request, res: Response): Promise<Response> => {
         if (!refreshToken) {
             return res
                 .status(401)
-                .send(Helper.ResponseData(401, "Unauthorized", null, null));
+                .send(
+                    Helper.ResponseData(401, "Unauthorized Access", null, null)
+                );
         }
 
         const decodedUser = Helper.ExtractRefreshToken(refreshToken);
         if (!decodedUser) {
             return res
                 .status(401)
-                .send(Helper.ResponseData(401, "Unauthorized", null, null));
+                .send(
+                    Helper.ResponseData(401, "Unauthorized Access", null, null)
+                );
         }
 
         const token = Helper.GenerateToken({
@@ -135,6 +139,42 @@ const refreshToken = async (req: Request, res: Response): Promise<Response> => {
         return res
             .status(200)
             .send(Helper.ResponseData(200, "OK", null, resultUser));
+    } catch (error) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    }
+};
+
+const getUserProfile = async (
+    req: Request,
+    res: Response
+): Promise<Response> => {
+    try {
+        const email = res.locals.userEmail;
+
+        const user = await User.findOne({
+            where: {
+                email,
+            },
+        });
+        if (!user) {
+            return res
+                .status(404)
+                .send(Helper.ResponseData(404, "User Not Found", null, null));
+        }
+
+        user.password = "";
+        user.accessToken = "";
+
+        return res
+            .status(200)
+            .send(
+                Helper.ResponseData(
+                    200,
+                    "Successfully get user's profile",
+                    null,
+                    user
+                )
+            );
     } catch (error) {
         return res.status(500).send(Helper.ResponseData(500, "", error, null));
     }
@@ -317,6 +357,7 @@ export default {
     register,
     login,
     refreshToken,
+    getUserProfile,
     /**
     getRoles,
     getRoleByID,
