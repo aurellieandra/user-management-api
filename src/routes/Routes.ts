@@ -1,30 +1,51 @@
 import express from "express";
 
 import RoleController from "../controllers/RoleController";
-import UserController from "../controllers/UserController";
+import AuthController from "../controllers/AuthController";
 
 import UserValidation from "../middleware/validation/UserValidation";
 
 import Authorization from "../middleware/Authorization";
+import UserController from "../controllers/UserController";
 
 const router = express.Router();
 
-// User Data
+// Auth
 router.post(
-    "/user/register",
+    "/auth/register",
     UserValidation.registerValidation,
-    UserController.register
+    AuthController.register
 );
-router.post("/user/login", UserController.login);
-router.get("/user/refresh-token", UserController.refreshToken);
+router.post("/auth/login", AuthController.login);
+router.get("/auth/refresh-token", AuthController.refreshToken);
 router.get(
-    "/user/profile",
+    "/auth/profile",
     Authorization.Authenticated,
-    UserController.getUserProfile
+    AuthController.getUserProfile
 );
-router.get("/user/logout", Authorization.Authenticated, UserController.logout);
+router.get("/auth/logout", Authorization.Authenticated, AuthController.logout);
 
-// User Role
+// User Data
+router.get("/user", Authorization.Authenticated, UserController.getUsers);
+router.get(
+    "/user/:id",
+    Authorization.Authenticated,
+    UserController.getUserByID
+);
+router.post(
+    "/user/:id",
+    Authorization.Authenticated,
+    Authorization.AdminRole,
+    UserController.updateUser
+);
+router.delete(
+    "/user/:id",
+    Authorization.Authenticated,
+    Authorization.SuperAdminRole,
+    UserController.deleteUser
+);
+
+// Role for User
 router.get("/role", Authorization.Authenticated, RoleController.getRoles);
 router.get(
     "/role/:id",
