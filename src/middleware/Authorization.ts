@@ -24,12 +24,62 @@ const Authenticated = (req: Request, res: Response, next: NextFunction) => {
         }
 
         res.locals.userEmail = result?.email;
+        res.locals.roleID = result?.roleID;
 
         next();
     } catch (error) {
         return res.status(500).send(Helper.ResponseData(500, "", error, null));
     }
 };
+
+const SuperAdminRole = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const roleID = res.locals.roleID;
+        if (roleID != 1) {
+            return res
+                .status(403)
+                .send(Helper.ResponseData(403, "Forbidden", null, null));
+        }
+
+        next();
+    } catch (error) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    }
+};
+
+const AdminRole = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const roleID = res.locals.roleID;
+        if (roleID != 2) {
+            return res
+                .status(403)
+                .send(Helper.ResponseData(403, "Forbidden", null, null));
+        }
+
+        next();
+    } catch (error) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    }
+};
+
+const UserRole = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const roleID = res.locals.roleID;
+        if (roleID != 3) {
+            return res
+                .status(403)
+                .send(Helper.ResponseData(403, "Forbidden", null, null));
+        }
+
+        next();
+    } catch (error) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    }
+};
+
 export default {
     Authenticated,
+    SuperAdminRole,
+    AdminRole,
+    UserRole,
 };

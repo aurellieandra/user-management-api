@@ -26,9 +26,28 @@ router.get("/user/logout", Authorization.Authenticated, UserController.logout);
 
 // User Role
 router.get("/role", Authorization.Authenticated, RoleController.getRoles);
-router.get("/role/:id", RoleController.getRoleByID);
-router.post("/role", RoleController.createRole);
-router.post("/role/:id", RoleController.updateRole);
-router.delete("/role/:id", RoleController.deleteRole);
+router.get(
+    "/role/:id",
+    Authorization.Authenticated,
+    RoleController.getRoleByID
+);
+router.post(
+    "/role",
+    Authorization.Authenticated,
+    Authorization.AdminRole,
+    RoleController.createRole
+);
+router.post(
+    "/role/:id",
+    Authorization.Authenticated,
+    Authorization.AdminRole,
+    RoleController.updateRole
+);
+router.delete(
+    "/role/:id",
+    Authorization.Authenticated,
+    Authorization.SuperAdminRole,
+    RoleController.deleteRole
+);
 
 export default router;
