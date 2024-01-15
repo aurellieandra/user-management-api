@@ -22,6 +22,7 @@ router.get(
     Authorization.Authenticated,
     UserController.getUserProfile
 );
+router.get("/user/logout", Authorization.Authenticated, UserController.logout);
 
 // User Role
 router.get("/role", Authorization.Authenticated, RoleController.getRoles);
