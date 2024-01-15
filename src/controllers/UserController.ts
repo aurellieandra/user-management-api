@@ -40,19 +40,16 @@ const login = async (req: Request, res: Response): Promise<Response> => {
 				.status(401)
 				.send(Helper.ResponseData(401, 'Unauthorized Access', null, null));
 		}
-		
-            const matched = await PasswordHelper.PasswordCompare(
-                password,
-                user.password
-            );
-            if (!matched) {
-                return res
-                    .status(401)
-                    .send(
-                        Helper.ResponseData(401, "Unauthorized Access", null, null)
-                    );
-            }
-        
+
+		const matched = await PasswordHelper.PasswordCompare(
+			password,
+			user.password
+		);
+		if (!matched) {
+			return res
+				.status(401)
+				.send(Helper.ResponseData(401, 'Unauthorized Access', null, null));
+		}
 
 		const dataUser = {
 			name: user.name,
@@ -63,15 +60,14 @@ const login = async (req: Request, res: Response): Promise<Response> => {
 		};
 
 		const token = Helper.GenerateToken(dataUser);
-        const refreshToken = Helper.GenerateRefreshToken(dataUser)
+		const refreshToken = Helper.GenerateRefreshToken(dataUser);
 
-        user.accessToken = refreshToken,
-        await user.save()
+		(user.accessToken = refreshToken), await user.save();
 
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000
-        })
+		res.cookie('refreshToken', refreshToken, {
+			httpOnly: true,
+			maxAge: 24 * 60 * 60 * 1000,
+		});
 
 		const responseUser = {
 			name: user.name,
@@ -85,13 +81,47 @@ const login = async (req: Request, res: Response): Promise<Response> => {
 		return res
 			.status(200)
 			.send(
-				Helper.ResponseData(
-					200,
-					'Successfully logged in',
-					null,
-					responseUser
-				)
+				Helper.ResponseData(200, 'Successfully logged in', null, responseUser)
 			);
+	} catch (error) {
+		return res.status(500).send(Helper.ResponseData(500, '', error, null));
+	}
+};
+
+const refreshToken = async (req: Request, res: Response): Promise<Response> => {
+	try {
+		const refreshToken = req.cookies?.refreshToken;
+		if (!refreshToken) {
+			return res
+				.status(401)
+				.send(Helper.ResponseData(401, 'Unauthorized Access', null, null));
+		}
+
+		const decodeUser = Helper.ExtractRefreshToken(refreshToken);
+		if (!decodeUser) {
+			return res
+				.status(401)
+				.send(Helper.ResponseData(401, 'Unauthorized Access', null, null));
+		}
+
+		const token = Helper.GenerateToken({
+			name: decodeUser.name,
+			email: decodeUser.email,
+			roleID: decodeUser.roleID,
+			verified: decodeUser.verified,
+			active: decodeUser.active
+		});
+
+		const resultUser = {
+			name: decodeUser.name,
+			email: decodeUser.email,
+			roleID: decodeUser.roleID,
+			verified: decodeUser.verified,
+			active: decodeUser.active,
+			token,
+		};
+
+		return res.status(200).send(Helper.ResponseData(200, "OK", null, resultUser))
 	} catch (error) {
 		return res.status(500).send(Helper.ResponseData(500, '', error, null));
 	}
@@ -273,6 +303,7 @@ const deleteRole = async (req: Request, res: Response): Promise<Response> => {
 export default {
 	register,
 	login,
+	refreshToken,
 	/**
     getRoles,
     getRoleByID,

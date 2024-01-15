@@ -19,6 +19,10 @@ router.post(
     "/user/login",
     UserController.login
 );
+router.get(
+    "/user/refresh-token",
+    UserController.refreshToken
+);
 
 // User Role
 router.get("/role", Authorization.Authenticated, RoleController.getRoles);

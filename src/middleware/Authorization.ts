@@ -7,7 +7,10 @@ const Authenticated = (req: Request, res: Response, next: NextFunction) => {
         const token = authToken && authToken.split(" ")[1]
 
         if (token){
-            const result = Helper.ExtractToken(token)
+            const result = Helper.ExtractToken(token!)
+            if (!result) {
+                return res.status(401).send(Helper.ResponseData(401, "Unauthorized Access", null, null))
+            }
             next()
         } else {
             return res.status(401).send(Helper.ResponseData(401, "Unauthorized Access", null, null))
