@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+
 import User from "../db/models/User";
 import Helper from "../helpers/Helper";
 
@@ -9,6 +10,11 @@ const getUsers = async (req: Request, res: Response): Promise<Response> => {
                 active: true,
             },
         });
+
+        users.map((user: any) => {
+            user.password = ""
+            user.accessToken = ""
+        })
 
         return res
             .status(200)
@@ -40,6 +46,9 @@ const getUserByID = async (req: Request, res: Response): Promise<Response> => {
                 .send(Helper.ResponseData(404, "User Not Found", null, null));
         }
 
+        user.password = ""
+        user.accessToken = ""
+
         return res
             .status(200)
             .send(
@@ -63,7 +72,7 @@ const updateUser = async (req: Request, res: Response): Promise<Response> => {
     try {
         const { id } = req.params;
 
-        // not change roleID & password & access token here
+        // not change roleID & password & access token here, only profile data
         const { name, email, verified, active } = req.body;
 
         const user = await User.findByPk(id);
@@ -79,6 +88,9 @@ const updateUser = async (req: Request, res: Response): Promise<Response> => {
         user.verified = verified;
         user.active = active;
         await user.save();
+
+        user.password = ""
+        user.accessToken = ""
 
         return res
             .status(201)

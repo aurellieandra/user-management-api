@@ -1,4 +1,7 @@
 import { Request, Response } from "express";
+
+import Helper from "../helpers/Helper";
+
 import Role from "../db/models/Role";
 
 const getRoles = async (req: Request, res: Response): Promise<Response> => {
@@ -9,25 +12,22 @@ const getRoles = async (req: Request, res: Response): Promise<Response> => {
             },
         });
 
-        return res.status(200).send({
-            status: 200,
-            message: "Successfully Get User Roles",
-            data: roles,
-        });
+        return res
+            .status(200)
+            .send(
+                Helper.ResponseData(
+                    200,
+                    "Successfully Get All User's Roles Data",
+                    null,
+                    roles
+                )
+            );
     } catch (error: any) {
-        if (error != null && error instanceof Error) {
-            return res.status(500).send({
-                status: 500,
-                message: error.message,
-                errors: error,
-            });
-        }
-
-        return res.status(500).send({
-            status: 500,
-            message: "Internal Server Error",
-            errors: error,
-        });
+        return res
+            .status(500)
+            .send(
+                Helper.ResponseData(500, "Internal Server Error", error, null)
+            );
     }
 };
 
